@@ -112,7 +112,7 @@ namespace ShoppingAspNetMvc.Areas.Admin.Controllers
 
         // POST: Admin/Shop/RenameCategory
         [HttpPost]
-        public string RenameCategory(string newCatName,int id)
+        public string RenameCategory(string newCatName, int id)
         {
             using (Db db = new Db())
             {
@@ -130,8 +130,8 @@ namespace ShoppingAspNetMvc.Areas.Admin.Controllers
                 db.SaveChanges();
             }
 
-                //return
-                return "ok";
+            //return
+            return "ok";
         }
 
         //GET: Admin/Shop/AddProduct
@@ -156,7 +156,7 @@ namespace ShoppingAspNetMvc.Areas.Admin.Controllers
         public ActionResult AddProduct(ProductVM model, HttpPostedFileBase file)
         {
             //Check model state
-            if(!ModelState.IsValid)
+            if (!ModelState.IsValid)
             {
                 using (Db db = new Db())
                 {
@@ -168,7 +168,7 @@ namespace ShoppingAspNetMvc.Areas.Admin.Controllers
             //Make sure productName is unique
             using (Db db = new Db())
             {
-                if(db.Products.Any(x => x.Name == model.Name))
+                if (db.Products.Any(x => x.Name == model.Name))
                 {
                     model.Categories = new SelectList(db.Categories.ToList(), "Id", "Name");
                     ModelState.AddModelError("", "That model name is taken");
@@ -206,10 +206,10 @@ namespace ShoppingAspNetMvc.Areas.Admin.Controllers
 
             #region Upload Image
             //create necessary directories
-            var originalDirectory = new DirectoryInfo(string.Format("{0}Images\\Uploads",Server.MapPath(@"\")));
+            var originalDirectory = new DirectoryInfo(string.Format("{0}Images\\Uploads", Server.MapPath(@"\")));
 
             //check if a file was updated
-            var pathString1 = Path.Combine(originalDirectory.ToString(),"Products");
+            var pathString1 = Path.Combine(originalDirectory.ToString(), "Products");
             var pathString2 = Path.Combine(originalDirectory.ToString(), "Products\\" + id.ToString());
             var pathString3 = Path.Combine(originalDirectory.ToString(), "Products\\" + id.ToString() + "\\Thumbs");
             var pathString4 = Path.Combine(originalDirectory.ToString(), "Products\\" + id.ToString() + "\\Gallery");
@@ -225,15 +225,15 @@ namespace ShoppingAspNetMvc.Areas.Admin.Controllers
                 Directory.CreateDirectory(pathString4);
             if (!Directory.Exists(pathString5))
                 Directory.CreateDirectory(pathString5);
-            
-            
-            if(file != null && file.ContentLength >0)
+
+
+            if (file != null && file.ContentLength > 0)
             {
                 //Get file extension
                 string ext = file.ContentType.ToLower();
 
                 //Verify extension
-                if(ext != "image/jpg" &&
+                if (ext != "image/jpg" &&
                    ext != "image/jpeg" &&
                    ext != "image/pjpeg" &&
                    ext != "image/gif" &&
@@ -262,7 +262,7 @@ namespace ShoppingAspNetMvc.Areas.Admin.Controllers
 
 
                 //Set original and thumb image paths
-                var path = string.Format("{0}\\{1}",pathString2,imageName);
+                var path = string.Format("{0}\\{1}", pathString2, imageName);
                 var path2 = string.Format("{0}\\{1}", pathString3, imageName);
 
                 //Save original
@@ -290,7 +290,7 @@ namespace ShoppingAspNetMvc.Areas.Admin.Controllers
             //Set page number
             var pageNumber = page ?? 1;
 
-            
+
             using (Db db = new Db())
             {
                 //Init the list
@@ -299,7 +299,7 @@ namespace ShoppingAspNetMvc.Areas.Admin.Controllers
                     .Select(x => new ProductVM(x)).ToList();
 
                 //Populate categories selectList
-                ViewBag.Categories = new SelectList(db.Categories.ToList(),"Id", "Name");
+                ViewBag.Categories = new SelectList(db.Categories.ToList(), "Id", "Name");
 
                 //set selected category
                 ViewBag.SelectedCat = catId.ToString();
@@ -310,7 +310,7 @@ namespace ShoppingAspNetMvc.Areas.Admin.Controllers
             //Set pagination
             var onePageOfProducts = listOfProductVM.ToPagedList(pageNumber, 3);
             ViewBag.OnePageOfProducts = onePageOfProducts;
-            
+
             //return View with list
             return View(listOfProductVM);
         }
@@ -334,15 +334,15 @@ namespace ShoppingAspNetMvc.Areas.Admin.Controllers
                 model = new ProductVM(dto);
 
                 //make a select list
-                model.Categories = new SelectList(db.Categories.ToList(),"Id","Name");
+                model.Categories = new SelectList(db.Categories.ToList(), "Id", "Name");
 
                 //Get all gallery images
                 model.GalleryImages = Directory.EnumerateFiles(Server.MapPath("~/Images/Uploads/Products/" + id + "/Gallery/Thumbs"))
                                                .Select(fn => Path.GetFileName(fn));
             }
 
-                //rerurn view with model
-                return View(model);
+            //rerurn view with model
+            return View(model);
         }
 
         //GET: Admin/Shop/DeleteProduct/id
@@ -358,13 +358,63 @@ namespace ShoppingAspNetMvc.Areas.Admin.Controllers
 
             //Delete product folder
             var originalDirectory = new DirectoryInfo(string.Format("{0}Images\\Uploads", Server.MapPath(@"\")));
-            string pathString = Path.Combine(originalDirectory.ToString(),"Products\\",id.ToString());
+            string pathString = Path.Combine(originalDirectory.ToString(), "Products\\", id.ToString());
 
             if (Directory.Exists(pathString))
-                Directory.Delete(pathString,true);
-            
+                Directory.Delete(pathString, true);
+
             //Redirect
             return RedirectToAction("Products");
+        }
+
+        //POST: Admin/Shop/SaveGalleryImages
+        [HttpPost]
+        public ActionResult SaveGalleryImages(int id)
+        {
+            //Loop through file
+            foreach (string fileName in Request.Files)
+            {
+                //init the file
+                HttpPostedFileBase file = Request.Files[fileName];
+
+                //Check it' s not null
+                if (file != null && file.ContentLength > 0)
+                {
+                    //Set directory path
+                    var originalDirectory = new DirectoryInfo(string.Format("{0}Images\\Uploads", Server.MapPath(@"\")));
+
+                    string pathString1 = Path.Combine(originalDirectory.ToString(), "Products\\" + id.ToString() + "\\Gallery");
+                    string pathString2 = Path.Combine(originalDirectory.ToString(), "Products\\" + id.ToString() + "\\Gallery\\Thumbs");
+
+                    //set image path
+                    string path = string.Format("{0}\\{1}", pathString1, file.FileName);
+                    string path2 = string.Format("{0}\\{1}", pathString2, file.FileName);
+
+                    //Save original and thumb
+                    file.SaveAs(path);
+                    WebImage img = new WebImage(file.InputStream);
+                    img.Resize(200, 200);
+                    img.Save(path2);
+                }
+
+
+            }
+
+            return View();
+        }
+
+        //POST: Admin/Shop/DeleteImage
+        [HttpPost]
+        public void DeleteImage(int id, string imageName)
+        {
+            string fullPath1 = Request.MapPath("~/Images/Uploads/Products/" + id.ToString() + "/Gallery/" + imageName);
+            string fullPath2 = Request.MapPath("~/Images/Uploads/Products/" + id.ToString() + "/Gallery/Thumbs/" + imageName);
+
+            //Deleting files from folders
+            if (System.IO.File.Exists(fullPath1))
+                System.IO.File.Delete(fullPath1);
+            if (System.IO.File.Exists(fullPath2))
+                System.IO.File.Delete(fullPath2);
         }
     }
 }
