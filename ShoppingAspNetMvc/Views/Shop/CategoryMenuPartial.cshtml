@@ -1,0 +1,8 @@
+﻿@model IEnumerable<ShoppingAspNetMvc.Models.ViewModels.Shop.CategoryVM>
+
+
+@foreach (var item in Model) {
+    <li><a href="/shop/category/@item.Slug.ToLower()">@item.Name</a></li>
+}
+
+
